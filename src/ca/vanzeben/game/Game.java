@@ -1,5 +1,8 @@
 package ca.vanzeben.game;
 
+import ca.vanzeben.game.gfx.Screen;
+import ca.vanzeben.game.gfx.SpriteSheet;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
@@ -22,6 +25,10 @@ public class Game extends Canvas implements Runnable {
 
     private BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
     private int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+    private int[] colours = new int[6 * 6 *6];
+
+    private Screen screen;
+    public InputHandler input;
 
     public Game() {
         setMinimumSize(new Dimension(WIDTH * SCALE, HEIGHT * SCALE));
@@ -39,6 +46,23 @@ public class Game extends Canvas implements Runnable {
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+
+    public void init() {
+        int index = 0;
+        for (int r=0; r<6; r++) {
+            for (int g=0; g<6; g++) {
+                for (int b=0; b<6; b++) {
+                    int rr = (r * 255 / 5);
+                    int gg = (g * 255 / 5);
+                    int bb = (b * 255 / 5);
+
+                    colours[index++] = rr << 16 | gg<< 8 | bb;
+                }
+            }
+        }
+        screen = new Screen(WIDTH, HEIGHT, new SpriteSheet("/sprite_sheet.png"));
+        input = new InputHandler(this);
     }
 
     private synchronized void start() {
@@ -59,6 +83,9 @@ public class Game extends Canvas implements Runnable {
 
         long lastTimer = System.currentTimeMillis();
         double delta = 0;
+
+        init();
+
         while(running) {
             long now = System.nanoTime();
             delta += (now - lastTime) / nsPerTick;
@@ -95,8 +122,17 @@ public class Game extends Canvas implements Runnable {
     public void tick() {
         tickCount++;
 
-        for (int i=0; i<pixels.length; i++) {
-            pixels[i] = i + tickCount;
+        if(input.up.isPressed()) {
+            screen.yOffset--;
+        }
+        if(input.down.isPressed()) {
+            screen.yOffset++;
+        }
+        if(input.left.isPressed()) {
+            screen.xOffset--;
+        }
+        if(input.right.isPressed()) {
+            screen.xOffset++;
         }
     }
 
@@ -105,6 +141,19 @@ public class Game extends Canvas implements Runnable {
         if (bs == null) {
             createBufferStrategy(3);
             return;
+        }
+
+        for (int y=0; y<32; y++) {
+            for (int x=0; x<32; x++) {
+                screen.render(x<<3, y<<3, 0, Colours.get(555, 500, 050, 005));
+            }
+        }
+
+        for (int y=0; y<screen.height; y++) {
+            for (int x=0; x<screen.width; x++) {
+                int colourCode = screen.pixels[x+y * screen.width];
+                if(colourCode < 255) pixels[x+y * WIDTH] = colours[colourCode];
+            }
         }
 
         Graphics g = bs.getDrawGraphics();
