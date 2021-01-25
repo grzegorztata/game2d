@@ -1,4 +1,4 @@
-package ca.vanzeben.game;
+package ca.vanzeben.game.gfx;
 
 public class Colours {
 
