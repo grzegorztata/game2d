@@ -123,17 +123,9 @@ public class Game extends Canvas implements Runnable {
             }
         }
     }
-
-    private int x = 0, y = 0;
-
+    
     public void tick() {
         tickCount++;
-
-        if(input.up.isPressed()) y--;
-        if(input.down.isPressed()) y++;
-        if(input.left.isPressed()) x--;
-        if(input.right.isPressed()) x++;
-
         level.tick();
     }
 
